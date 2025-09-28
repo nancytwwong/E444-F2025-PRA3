@@ -77,7 +77,11 @@ def test_messages(client):
 
 def test_delete_message(client):
     """Ensure the messages are being deleted"""
-    rv = client.get('/delete/1')
+    rv = client.get("/delete/1")
+    data = json.loads(rv.data)
+    assert data["status"] == 0
+    login(client, app.config["USERNAME"], app.config["PASSWORD"])
+    rv = client.get("/delete/1")
     data = json.loads(rv.data)
     assert data["status"] == 1
 
@@ -104,3 +108,20 @@ def test_search_functionality(client):
     rv = client.get("/search/?query=Java")
     assert b"Flask Tips" not in rv.data
     assert b"Python Tricks" not in rv.data
+
+def test_login_required_decorator_on_delete(client):
+    """Ensure login_required blocks unauthorized access to /delete/<post_id>"""
+
+    # Attempt to delete without logging in
+    rv = client.get("/delete/1")
+    assert rv.status_code == 401
+    data = json.loads(rv.data)
+    assert data["status"] == 0
+    assert data["message"] == "Please log in."
+
+    # Log in and try again
+    login(client, app.config["USERNAME"], app.config["PASSWORD"])
+    rv = client.get("/delete/1")
+    assert rv.status_code == 200
+    data = json.loads(rv.data)
+    assert data["status"] in [0, 1]  # 0 if post doesn't exist, 1 if deleted
