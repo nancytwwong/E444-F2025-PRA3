@@ -1,5 +1,5 @@
-import os
-import pytest, json
+import pytest
+import json
 from pathlib import Path
 
 from project.app import app, db
@@ -75,6 +75,7 @@ def test_messages(client):
     assert b"&lt;Hello&gt;" in rv.data
     assert b"<strong>HTML</strong> allowed here" in rv.data
 
+
 def test_delete_message(client):
     """Ensure the messages are being deleted"""
     rv = client.get("/delete/1")
@@ -85,13 +86,22 @@ def test_delete_message(client):
     data = json.loads(rv.data)
     assert data["status"] == 1
 
+
 def test_search_functionality(client):
     """Ensure search returns correct results"""
     login(client, app.config["USERNAME"], app.config["PASSWORD"])
 
     # Add posts
-    client.post("/add", data=dict(title="Flask Tips", text="Use Blueprints"), follow_redirects=True)
-    client.post("/add", data=dict(title="Python Tricks", text="List comprehensions"), follow_redirects=True)
+    client.post(
+        "/add",
+        data=dict(title="Flask Tips", text="Use Blueprints"),
+        follow_redirects=True,
+    )
+    client.post(
+        "/add",
+        data=dict(title="Python Tricks", text="List comprehensions"),
+        follow_redirects=True,
+    )
 
     # Search for 'Flask'
     rv = client.get("/search/?query=Flask")
@@ -108,6 +118,7 @@ def test_search_functionality(client):
     rv = client.get("/search/?query=Java")
     assert b"Flask Tips" not in rv.data
     assert b"Python Tricks" not in rv.data
+
 
 def test_login_required_decorator_on_delete(client):
     """Ensure login_required blocks unauthorized access to /delete/<post_id>"""
